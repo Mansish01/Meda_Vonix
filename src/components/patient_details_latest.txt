@@ -1,0 +1,291 @@
+import React, { useEffect, useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
+import { ArrowLeft, User, AlignJustify, Mic } from 'lucide-react';
+import DashboardSidebar from './DashboardSidebar';
+import VoiceRecorder from './Record';
+
+interface MedicalCondition {
+  id: number;
+  condition: string;
+  description: string;
+  diagnosisDate: string;
+  status: 'Active' | 'Resolved' | 'Under Observation';
+}
+
+interface Patient {
+  id: number;
+  name: string;
+  age: number;
+  gender?: string;
+  bloodGroup?: string;
+  lastVisit?: string;
+  nextAppointment?: string;
+  medicalHistory: MedicalCondition[];
+}
+
+const PatientDetails: React.FC = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [patient, setPatient] = useState<Patient | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [currentSection, setCurrentSection] = useState('patients');
+  const [showRecord, setShowRecord] = useState(false);
+  const [activeTab, setActiveTab] = useState<'tab1' | 'tab2' | 'tab3'>('tab1'); // State for active tab
+
+  useEffect(() => {
+    const mockPatientData: Patient = {
+      id: Number(id),
+      name: id === '1' ? 'Manish Gyawali' : id === '2' ? 'Saugat Thapa' : 'Aahwast Pandit',
+      age: id === '1' ? 25 : id === '2' ? 22 : 24,
+      gender: 'Male',
+      bloodGroup: 'O+',
+      lastVisit: '2024-01-15',
+      nextAppointment: '2024-02-15',
+      medicalHistory: [
+        {
+          id: 1,
+          condition: 'Hypertension',
+          description: 'Patient shows elevated blood pressure readings consistently above 140/90 mmHg. Currently on medication with regular monitoring required.',
+          diagnosisDate: '2023-06-15',
+          status: 'Active'
+        },
+        {
+          id: 2,
+          condition: 'Type 2 Diabetes',
+          description: 'Blood sugar levels are being managed through diet and exercise. HbA1c levels show improvement over the last 3 months.',
+          diagnosisDate: '2023-08-20',
+          status: 'Under Observation'
+        },
+        {
+          id: 3,
+          condition: 'Seasonal Allergies',
+          description: 'Patient experiences respiratory symptoms during spring. Prescribed antihistamines as needed.',
+          diagnosisDate: '2023-03-10',
+          status: 'Resolved'
+        }
+      ]
+    };
+
+    setPatient(mockPatientData);
+    setLoading(false);
+  }, [id]);
+
+  const handleSidebarItemClick = (selectedSection: string) => {
+    setCurrentSection(selectedSection);
+    navigate('/dashboard');
+  };
+
+  const handleRecord = () => {
+    setShowRecord(!showRecord);
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Active':
+        return 'text-red-600 bg-red-50';
+      case 'Resolved':
+        return 'text-green-600 bg-green-50';
+      case 'Under Observation':
+        return 'text-yellow-600 bg-yellow-50';
+      default:
+        return 'text-gray-600 bg-gray-50';
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-lg">Loading patient details...</div>
+      </div>
+    );
+  }
+
+  if (!patient) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-lg">Patient not found</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-100 flex">
+      {/* Sidebar */}
+      <div className="fixed left-0 top-0 h-screen w-56">
+        <DashboardSidebar
+          section={currentSection}
+          setSection={setCurrentSection}
+          onSidebarItemClick={handleSidebarItemClick}
+        />
+      </div>
+
+   
+      <div className="flex-1 pl-56">
+     
+        <div className="fixed top-0 right-0 left-56 bg-gray-300 p-3 z-10">
+          <div className="flex justify-end items-center px-2">
+            <User className="text-emerald-600 mr-4" size={30} />
+            <AlignJustify className="text-emerald-600" size={30} />
+          </div>
+        </div>
+
+        <div className="custom-scrollbar pt-16 h-screen overflow-y-auto">
+          <div className="p-6">
+        
+            <div className="flex justify-between items-center">
+              <button
+                onClick={() => navigate(-1)}
+                className="flex items-center text-emerald-600 hover:text-emerald-700 mb-6"
+              >
+                <ArrowLeft size={20} className="mr-2" />
+                Back to Patient List
+              </button>
+
+            </div>
+
+        
+            <div className="bg-white shadow rounded-lg p-6 space-y-8">
+              <div>
+                <h2 className="text-3xl font-semibold mb-6">Patient Details</h2>
+                <div className="grid grid-cols-1 md:grid-rows-2 gap-2">
+                  <div className="md:grid grid-cols-4 gap-2">
+                    <div>
+                      <h3 className="text-gray-500 text-sm">Full Name</h3>
+                      <p className="text-lg font-medium">{patient.name}</p>
+                    </div>
+                    <div>
+                      <h3 className="text-gray-500 text-sm">Age</h3>
+                      <p className="text-lg">{patient.age} years</p>
+                    </div>
+                    <div>
+                      <h3 className="text-gray-500 text-sm">Gender</h3>
+                      <p className="text-lg">{patient.gender}</p>
+                    </div>
+                    <div>
+                      <h3 className="text-gray-500 text-sm">Blood Group</h3>
+                      <p className="text-lg">{patient.bloodGroup}</p>
+                    </div>
+                  </div>
+                  <div className="md:grid grid-cols-2 gap-2 mt-2">
+                    <div>
+                      <h3 className="text-gray-500 text-sm">Last Visit</h3>
+                      <p className="text-lg">{patient.lastVisit}</p>
+                    </div>
+                    <div>
+                      <h3 className="text-gray-500 text-sm">Next Appointment</h3>
+                      <p className="text-lg">{patient.nextAppointment}</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+           
+              <div className="w-full h-px bg-gray-300"></div>
+
+              <div>
+              
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-2xl font-semibold">Medical History</h2>
+                
+                  <div className="flex">
+                      <button
+                        onClick={() => setActiveTab('tab1')}
+                        className={`px-4 py-2 rounded-l-lg ${
+                          activeTab === 'tab1'
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        Medical History
+                      </button>
+                      <button
+                        onClick={() => setActiveTab('tab2')}
+                        className={`px-4 py-2 rounded-r-lg ${
+                          activeTab === 'tab2'
+                            ? 'bg-emerald-600 text-white'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        Voice Notes
+                      </button>
+                    </div>
+                  
+                    <div className="flex items-center gap-2">
+                        <span className="text-gray-700">Initiate Call</span>
+                        <button 
+                        onClick={handleRecord}
+                        className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
+                          <Mic className="w-5 h-5 text-white" />
+                        </button>
+                    </div>
+                
+                </div>
+
+             
+                <div className="space-y-4">
+                  {activeTab === 'tab1' && (
+                    <div>
+                      {patient.medicalHistory.map((condition) => (
+                        <div key={condition.id} className="border rounded-lg p-4">
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <h3 className="text-lg font-medium">{condition.condition}</h3>
+                              <p className="text-sm text-gray-500">Diagnosed on: {condition.diagnosisDate}</p>
+                            </div>
+                            <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(condition.status)}`}>
+                              {condition.status}
+                            </span>
+                          </div>
+                          <p className="text-gray-700 mt-2">{condition.description}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {activeTab === 'tab2' && (
+                    <div>
+                      <p>Content for Tab 2</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-4">
+                <button className="px-4 py-2 border border-emerald-600 text-emerald-600 rounded-lg hover:bg-emerald-50">
+                  Edit Details
+                </button>
+                <button className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700">
+                  Add Medical Record
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Custom Scrollbar Styles */}
+      <style jsx>{`
+        .custom-scrollbar {
+          scrollbar-width: thin;
+          scrollbar-color: #4ade80 #ffffff;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 6px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: #ffffff;
+          border-radius: 3px;
+        }
+
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background-color: #4ade80;
+          border-radius: 3px;
+          border: none;
+        }
+      `}</style>
+    </div>
+  );
+};
+
+export default PatientDetails;

@@ -1,165 +1,137 @@
-import React from 'react';
-import {useNavigate } from 'react-router-dom';
-// import { GoogleLogin } from '@react-oauth/google';
-// import { jwtDecode } from "jwt-decode";
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { GoogleLogin } from '@react-oauth/google';
+import { jwtDecode } from "jwt-decode";
 
 const Login: React.FC = () => {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const navigate = useNavigate();
 
-    const navigate = useNavigate(); 
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>): Promise<void> => {
+    e.preventDefault();
+    
+    const formData = new URLSearchParams();
+    formData.append('email', email);
+    formData.append('password', password);
+  
+    try {
+      const response = await fetch('/doctor/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: formData.toString(),
+      });
 
-    const generatesessionUID = (): string => {
-      return crypto.randomUUID();
+      if (response.ok) {
+        const data = await response.json();
+        console.log(data.doctor_id)
+        navigate(`/dashboard/${data.doctor_id}`);
+      } else {
+        const errorData = await response.json();
+        setError(errorData.message || 'Login failed');
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      setError('An error occurred while logging in.');
     }
-    const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void  => {
-        e.preventDefault();
+  };
 
-        const sessionId = generatesessionUID();
-        const expirationTime = new Date().getTime() + 30 * 1000* 60;
-        // console.log('sessionId', sessionId);
-        localStorage.setItem('session', JSON.stringify({
-          sessionId,
-          expirationTime
-      }));
+  return (
+    <div className="flex flex-col items-center justify-center min-h-screen bg-emerald-800 text-white px-4">
+      <h2 className="text-3xl font-bold mb-8">Login</h2>
+      <div className="bg-white text-black rounded-lg p-8 shadow-lg w-full max-w-md">
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <label htmlFor="email" className="block text-base font-medium text-gray-700">
+              Email:
+            </label>
+            <input
+              type="email"
+              id="email"
+              name="email"
+              placeholder="e.g. manish@example.com"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full h-10 border border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 px-3"
+            />
+          </div>
+          <div className="space-y-2">
+            <label htmlFor="password" className="block text-base font-medium text-gray-700">
+              Password:
+            </label>
+            <input
+              type="password"
+              id="password"
+              name="password"
+              required
+              placeholder="e.g. @#$#MNH&78"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full h-10 border border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500 px-3"
+            />
+          </div>
+          <div className="text-right">
+            <p className="text-sm text-emerald-500 hover:underline cursor-pointer">
+              Forgot Password?
+            </p>
+          </div>
+          {error && (
+            <div className="text-red-500 text-sm">
+              {error}
+            </div>
+          )}
+          <button
+            type="submit"
+            className="w-full py-2 px-4 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 font-semibold transition-colors"
+          >
+            Login
+          </button>
+        </form>
 
-        navigate('/');
+        <div className="mt-6 text-center">
+          <p className="text-gray-600">
+            Don't have an account?{' '}
+            <a href="/signup" className="text-emerald-500 hover:underline font-medium">
+              Sign up
+            </a>
+          </p>
+        </div>
 
-      //   try {
-      //     // Send the session ID to the backend
-      //     const response = await fetch('http://localhost:8000/login', {
-      //         method: 'POST',
-      //         headers: { 'Content-Type': 'application/json' },
-      //         body: JSON.stringify({ username, password, sessionId }),
-      //     });
-  
-      //     if (response.ok) {
-      //         const data = await response.json();
-  
-      //         // Store the session ID in localStorage or cookies
-      //         const expirationTime = new Date().getTime() + 30 * 60 * 1000; // 30 minutes
-      //         localStorage.setItem(
-      //             'session',nTime })
-      //         );
-  
-      //         // Navigate to the home page
-      //         navigate('/');
-      //             JSON.stringify({ sessionId, expiratio
-      //     } else {
-      //         const error = await response.json();
-      //         alert(error.message || 'Login failed');
-      //     }
-      // } catch (error) {
-      //     console.error('Error:', error);
-      //     alert('An error occurred while logging in.');
-      // }
+        <div className="mt-6 flex items-center justify-center">
+          <div className="border-t border-gray-300 flex-grow"></div>
+          <span className="mx-4 text-gray-500">or</span>
+          <div className="border-t border-gray-300 flex-grow"></div>
+        </div>
 
-
-
-    //   const checkSession = () => {
-    //     const session = localStorage.getItem('session');
-    
-    //     if (session) {
-    //         const { sessionId, expirationTime } = JSON.parse(session);
-    
-    //         if (new Date().getTime() > expirationTime) {
-    //             // Session has expired
-    //             localStorage.removeItem('session');
-    //             alert('Session expired. Please log in again.');
-    //             navigate('/login');
-    //         }
-    //     }
-    // }; to check the session expiry
-        
-    };
-
-
-
-  
-    
-    return (
-<div className="flex flex-col items-center justify-center min-h-screen bg-emerald-800 text-white px-4">
-  <h2 className="text-3xl font-bold mb-8">Login</h2>
-  <form 
-    onSubmit={handleSubmit} 
-    className="bg-white text-black rounded-lg p-8 shadow-lg w-full max-w-md space-y-6"
-  >
-    <div className="space-y-2">
-      <label htmlFor="username" className="block text-base font-medium text-gray-700" >
-        Username/Email:
-      </label>
-      <input 
-        type="text" 
-        id="username" 
-        name="username" 
-        placeholder="e.g. Manish"
-        required 
-        className="w-full h-10 border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500"
-      />
-    </div>
-    <div className="space-y-2">
-      <label htmlFor="password" className="block text-base font-medium text-gray-700">
-        Password:
-      </label>
-      <input 
-        type="password" 
-        id="password" 
-        name="password" 
-        required 
-        placeholder='e.g. @#$#MNH&78'
-        className="w-full h-10 border-gray-300 rounded-md shadow-sm focus:ring-emerald-500 focus:border-emerald-500"
-      />
-    </div>
-    <div className="text-right">
-      <p className="text-sm text-emerald-500 hover:underline cursor-pointer">
-        Forgot Password?
-      </p>
-    </div>
-    <button 
-      type="submit" 
-      onSubmit={handleSubmit} 
-      className="w-full py-2 px-4 bg-emerald-500 text-white rounded-md hover:bg-emerald-600 font-semibold"
-    >
-      Login
-    </button>
-    {/* <div className="text-center space-y-4">
-      <p className="text-sm">Or Login With</p>
-      <div className="flex justify-around space-x-4"> */}
-      {/* <GoogleLogin
-          onSuccess={(credentialResponse) => {
-            try{
-              const token  = credentialResponse.credential;
-              if(!token){
-                throw new Error('No token found');
+        <div className=" mt-6  flex justify-center align-center">
+          <GoogleLogin
+            onSuccess={(credentialResponse) => {
+              try {
+                const token = credentialResponse.credential;
+                if (!token) {
+                  throw new Error('No token found');
+                }
+                const decode = jwtDecode(token);
+                console.log('Decoded Token', decode);
+                navigate('/');
+              } catch (error) {
+                console.error('Error', error);
               }
-              const decode = jwtDecode(token);
-              console.log('Decoded Toeken', decode);
-              navigate('/');
-            } catch (error){
-              console.error('Error', error);
-            }
-          }}/> */}
-
-        {/* <button 
-          type="button" 
-          onClick={handleSubmit}
-          className="py-2 px-7 bg-blue-500 text-white rounded-md hover:bg-blue-600 font-semibold"
-        >
-          Google
-        </button> */}
-
-        {/* <button 
-        
-          type="button" 
-          onClick={handleSubmit}
-          className="py-2 px-4 bg-blue-800 text-white rounded-md hover:bg-blue-900 font-semibold w-[42%]"
-        >
-          Facebook
-        </button> */}
-      {/* </div>
-    </div> */}
-  </form>
-</div>
-
-    );
+            }}
+            theme="outline"
+            shape="rectangular"
+            text="continue_with"
+            useOneTap={false}
+            
+          />
+        </div>
+      </div>
+    </div>
+  );
 };
 
 export default Login;

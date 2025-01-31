@@ -1,5 +1,8 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { Target } from './config.js'
+import {Target2} from './config.js'
+import {Target3} from './config.js'
 
 export default defineConfig({
   plugins: [react()],
@@ -8,15 +11,52 @@ export default defineConfig({
     host: true,
     proxy: {
       
-        // target: 'https://e7d1-113-199-192-49.ngrok-free.app',
+ 
         '/transcribe': {
         target: 'http://fs.wiseyak.com:8048/',
-        changeOrigin: false,
+        changeOrigin: false,},
 
-        
-        // '/patients/audio': {
-        // target: 'https://6864-2400-1a00-4b45-7fb0-d18d-e3d-ea9c-2aa6.ngrok-free.app',
-        // changeOrigin: true,
+        '/doctor/details': {
+          target: Target,
+          changeOrigin: true,
+          
+          secure: false,
+          ws: true,
+          configure: (proxy, _options) => {
+            proxy.on('error', (err, _req, _res) => {
+              
+            });
+            proxy.on('proxyReq', (proxyReq, req, _res) => {
+              console.log('Sending Request to the Target:', req.method, req.url);
+            });
+            proxy.on('proxyRes', (proxyRes, req, _res) => {
+              console.log('Received Response from the Target:', req.method, req.url);
+            });
+          }
+        }, 
+
+        '/doctor/login': {
+          target: Target,
+          changeOrigin: true,
+          
+          secure: false,
+          ws: true,
+          configure: (proxy, _options) => {
+            proxy.on('error', (err, _req, _res) => {
+              
+            });
+            proxy.on('proxyReq', (proxyReq, req, _res) => {
+              console.log('Sending Request to the Target:', req.method, req.url);
+            });
+            proxy.on('proxyRes', (proxyRes, req, _res) => {
+              console.log('Received Response from the Target:', req.method, req.url);
+            });
+          }
+        }, 
+
+        '/patient/problem': {
+        target: Target,
+        changeOrigin: true,
         
         secure: false,
         ws: true,
@@ -31,7 +71,78 @@ export default defineConfig({
             console.log('Received Response from the Target:', req.method, req.url);
           });
         }
-      }
+      }, 
+      '/patient/authenticate': {
+        target: Target, 
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+          
+          });
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            console.log('Sending Request to the Target:', req.method, req.url);
+          });
+          proxy.on('proxyRes', (proxyRes, req, _res) => {
+            console.log('Received Response from the Target:', req.method, req.url);
+          });
+        }
+      }, 
+      '/patient/logout': {
+        target: Target,
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+          
+          });
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            console.log('Sending Request to the Target:', req.method, req.url);
+          });
+          proxy.on('proxyRes', (proxyRes, req, _res) => {
+            console.log('Received Response from the Target:', req.method, req.url);
+          });
+        }
+      },
+
+      '/patients': {
+        target: Target2,
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+          
+          });
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            console.log('Sending Request to the Target:', req.method, req.url);
+          });
+          proxy.on('proxyRes', (proxyRes, req, _res) => {
+            console.log('Received Response from the Target:', req.method, req.url);
+          });
+        }
+      },
+
+      '/patients/register': {
+        target: Target3,
+        changeOrigin: true,
+        secure: false,
+        ws: true,
+        configure: (proxy, _options) => {
+          proxy.on('error', (err, _req, _res) => {
+          
+          });
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            console.log('Sending Request to the Target:', req.method, req.url);
+          });
+          proxy.on('proxyRes', (proxyRes, req, _res) => {
+            console.log('Received Response from the Target:', req.method, req.url);
+          });
+        }
+      },
+
     }
   }
 })

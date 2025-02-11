@@ -28,11 +28,21 @@ interface ResponseEntry {
   audioUrl?: string;
 }
 
+interface Transcription {
+  start_time: string;
+  end_time: string;
+  speaker: "doctor" | "patient";
+  text: string;
+}
+
 const PatientDetails: React.FC = () => {
-  const { id } = useParams();
+  const { doctorID, patientID } = useParams();
+
+  // console.log(doctorID, patientID)
+
   const navigate = useNavigate();
 
-  const [patient, setPatient] = useState<Patient | null>(null);
+  
   const [loading, setLoading] = useState(true);
   const [currentSection, setCurrentSection] = useState('patients');
   const [activeTab, setActiveTab] = useState<'tab1' | 'tab2'>('tab1');
@@ -49,45 +59,53 @@ const PatientDetails: React.FC = () => {
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const googleVoiceRef = useRef<SpeechSynthesisVoice | null>(null);
 
+  const [error, setError] = useState<string | null>(null);
+     
+  const [patientdetails, setPatientsdetails] = useState<any[]>([]);
+
+  const [file, setFile ] = useState()
+  const [uploading, setUploading] = useState(false)
+  const [messages, setMessages] = useState<Transcription[]>([]);
+
   useEffect(() => {
-    const mockPatientData: Patient = {
-      id: Number(id),
-      name: id === '1' ? 'Manish Gyawali' : id === '2' ? 'Saugat Thapa' : 'Aahwast Pandit',
-      age: id === '1' ? 25 : id === '2' ? 22 : 24,
-      gender: 'Male',
-      bloodGroup: 'O+',
-      lastVisit: '2024-01-15',
-      nextAppointment: '2024-02-15',
-      medicalHistory: [
-        {
-          id: 1,
-          condition: 'Hypertension',
-          description: 'Patient shows elevated blood pressure readings consistently above 140/90 mmHg. Currently on medication with regular monitoring required.',
-          diagnosisDate: '2023-06-15',
-          status: 'Active'
-        },
-        {
-          id: 2,
-          condition: 'Type 2 Diabetes',
-          description: 'Blood sugar levels are being managed through diet and exercise. HbA1c levels show improvement over the last 3 months.',
-          diagnosisDate: '2023-08-20',
-          status: 'Under Observation'
-        },
-        {
-          id: 3,
-          condition: 'Seasonal Allergies',
-          description: 'Patient experiences respiratory symptoms during spring. Prescribed antihistamines as needed.',
-          diagnosisDate: '2023-03-10',
-          status: 'Resolved'
-        }
-      ]
-    };
 
-    setPatient(mockPatientData);
+    const fetchpatientsdetails = async () =>{
+      if(!doctorID) return;
+      
+      try{
+         
+          setError(null);
+
+          const response = await fetch(`/doctor_dashboard/${doctorID}`, {
+            method: 'GET',
+            headers: {
+                'Accept': 'application/json',
+            },
+        });
+
+
+          if(!response.ok){
+              throw new Error(`Error status: ${response.status}`)
+          }
+
+          const data = await response.json()
+
+          const patient = data.find((p) => p.patient_id === patientID)
+          // console.log(patient)
+          setPatientsdetails(patient)    
+
+      } catch(err){
+          setError(err instanceof Error ? err.message : 'Failed to fetch patients');
+      } finally {
+          setLoading(false)
+      }
+  };
+      fetchpatientsdetails();
+
     setLoading(false);
-  }, [id]);
+  }, [doctorID]);
 
-  // Initialize speech synthesis and find Google Voice
+  
   useEffect(() => {
     synthRef.current = window.speechSynthesis;
 
@@ -248,8 +266,8 @@ const PatientDetails: React.FC = () => {
     synthRef.current.speak(utterance);
   };
 
-  const handleDivclick = (condition : MedicalCondition) => {
-    setSelectedCondition(condition)
+  const handleDivclick = (patientdetails) => {
+    setSelectedCondition(patientdetails)
     setclicked(!clicked)  
   };
 
@@ -267,6 +285,50 @@ const PatientDetails: React.FC = () => {
     }
   };
 
+  const handleUploadChange = (event) =>{
+    setFile(event.target.files[0])
+  }
+
+  const handleFileUpload = async () => {
+    if(!file) {
+      alert("Please Upload the file first")
+      return;
+    }
+
+    const formdata = new FormData();
+    formdata.append("patient_id", patientID)
+    formdata.append("audio_file", file)
+
+    setUploading(true);
+
+
+    try{
+      const response = await fetch(`/diarize/?patient_id=${patientID}`, {
+        method : 'POST',
+        body : formdata
+      });
+
+      if(response.ok){
+        // alert("File Uploaded  Successfully")
+        const data = await response.json()
+        console.log(data.transcriptions)
+        setMessages(data.transcriptions);
+        // console.log(messages)
+        
+      } else{
+        alert("Error in uploading file")
+      }
+    }catch(error){
+        console.error("Error in uploading file", error)
+        alert("An error occured in uploading file")
+      }
+     
+      setUploading(false)
+    }
+  
+
+
+
   if (loading) {
     return (
     
@@ -276,7 +338,7 @@ const PatientDetails: React.FC = () => {
     );
   }
 
-  if (!patient) {
+  if (!patientdetails) {
     return (
       <div className="flex justify-center items-center min-h-screen">
         <div className="text-lg">Patient not found</div>
@@ -322,29 +384,29 @@ const PatientDetails: React.FC = () => {
                   <div className="md:grid grid-cols-4 gap-2">
                     <div>
                       <h3 className="text-gray-500 text-sm">Full Name</h3>
-                      <p className="text-lg font-medium">{patient.name}</p>
+                      <p className="text-lg font-medium">{patientdetails.patient_name}</p>
                     </div>
                     <div>
                       <h3 className="text-gray-500 text-sm">Age</h3>
-                      <p className="text-lg">{patient.age} years</p>
+                      <p className="text-lg">{patientdetails.age} years</p>
                     </div>
                     <div>
                       <h3 className="text-gray-500 text-sm">Gender</h3>
-                      <p className="text-lg">{patient.gender}</p>
+                      <p className="text-lg">{patientdetails.gender}</p>
                     </div>
                     <div>
-                      <h3 className="text-gray-500 text-sm">Blood Group</h3>
-                      <p className="text-lg">{patient.bloodGroup}</p>
+                      <h3 className="text-gray-500 text-sm">Patient ID</h3>
+                      <p className="text-lg">{patientdetails.patient_id}</p>
                     </div>
                   </div>
                   <div className="md:grid grid-cols-2 gap-2 mt-2">
                     <div>
-                      <h3 className="text-gray-500 text-sm">Last Visit</h3>
-                      <p className="text-lg">{patient.lastVisit}</p>
+               ~       <h3 className="text-gray-500 text-sm">Last Visit</h3>
+                      <p className="text-lg">2025/01/03</p>
                     </div>
                     <div>
                       <h3 className="text-gray-500 text-sm">Next Appointment</h3>
-                      <p className="text-lg">{patient.nextAppointment}</p>
+                      <p className="text-lg">2025/03/02</p>
                     </div>
                   </div>
                 </div>
@@ -377,7 +439,7 @@ const PatientDetails: React.FC = () => {
                       Voice Notes
                     </button>
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-4">
                     <span className="text-gray-700">Initiate Call</span>
                     <button
                       onClick={handleRecordingClick}
@@ -386,10 +448,25 @@ const PatientDetails: React.FC = () => {
                       }`}
                     >
                       <Mic
-                        className={`w-5 h-5 ${
-                          isRecording ? 'text-white animate-pulse' : 'text-white'
-                        }`}
+                        className={`w-5 h-5 text-white ${isRecording ? 'animate-pulse' : ''}`}
                       />
+                    </button>
+                    <span className="text-gray-700">or</span>
+                    <label className="px-4 py-2 bg-blue-500 text-white rounded cursor-pointer hover:bg-blue-600">
+                      Choose File
+                      <input 
+                        type="file" 
+                        accept="audio/*" 
+                        onChange={handleUploadChange} 
+                        className="hidden"
+                      />
+                    </label>
+                    <button
+                      onClick={handleFileUpload}
+                      disabled={uploading}
+                      className="px-4 py-2 bg-green-500 text-white rounded disabled:bg-gray-400 hover:bg-green-600"
+                    >
+                      {uploading ? "Uploading..." : "Upload"}
                     </button>
                   </div>
                 </div>
@@ -397,7 +474,7 @@ const PatientDetails: React.FC = () => {
                 <div className="space-y-4 max-h-[60vh] overflow-auto">
                   {activeTab === 'tab1' && (
                     <div>
-                      {patient.medicalHistory.map((condition) => (
+                      {/* {patientdetails.problem_description.map((condition) => (
                         <div key={condition.id} className="border rounded-lg p-4" onClick={() =>handleDivclick(condition)}>
                           <div className="flex justify-between items-start mb-2">
                             <div>
@@ -413,10 +490,14 @@ const PatientDetails: React.FC = () => {
 
                             </div>
                           </div>
-                          <p className="text-gray-700 mt-2">{condition.description}</p>
+                          <p className="text-gray-700 mt-2">{condition.problem_description}</p>
                         </div>
-                      ))}
+                      ))} */}
+                      <div onClick={() =>handleDivclick(patientdetails)}>
+                        <p className="text-gray-700 mt-2">{patientdetails.problem_description}</p>
 
+                      </div>
+                     
                       <div className="flex justify-end gap-4">
                         <button className="px-4 py-2 border border-emerald-600 text-emerald-600 rounded-lg hover:bg-emerald-50">
                           Edit Details
@@ -430,25 +511,33 @@ const PatientDetails: React.FC = () => {
                   {activeTab === 'tab2' && (
                     <div className='flex gap-6 p-6 h-full'>
                       <div className='flex-1 min-w-0 bg-gray-100'>
-                       
-                        {responses.map((response, index) => (
-                          <div key={index} className="border rounded-lg p-4 mb-4">
-                            <div className="text-xs text-gray-500 mb-1">{response.timestamp}</div>
-                            <div className="text-gray-800">{response.text}</div>
-                            {index === responses.length - 1 && (
-                              <button
-                                onClick={() => playWithGoogleVoice()}
-                                className="mt-2 px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
-                              >
-                                {isPlaying ? (
-                                  <Pause className="w-5 h-5 text-white" />
-                                ) : (
-                                  <Play className="w-5 h-5 text-white" />
-                                )}
-                              </button>
-                            )}
+
+
+                      {messages.map((msg, index) => (
+                        <div
+                          key={index}
+                          className={`flex ${
+                            msg.speaker === "doctor" ? "justify-start" : "justify-end"
+                          }`}
+                        >
+                          <div
+                            className={`p-3 rounded-lg max-w-xs my-3 ${
+                              msg.speaker === "doctor"
+                                ? "bg-blue-500 text-white"
+                                : "bg-green-500 text-white"
+                            }`}
+                          >
+                            <p className="text-sm ">
+                              <strong>{msg.speaker === "doctor" ? "Doctor" : "Patient"}:</strong>{" "}
+                              {msg.text}
+                            </p>
+                
                           </div>
-                        ))}
+                        </div>
+                      ))}
+
+
+                    
                       </div>
 
                       <div className="flex-1 shrink-0 relative">
@@ -525,28 +614,32 @@ const PatientDetails: React.FC = () => {
       </div>
 
       {clicked && selectedCondition && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex flex-col items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 max-w-2xl w-full mx-4 relative">
-            <button 
+          <button 
               onClick={() => setclicked(false)}
-              className="absolute top-4 right-4 text-gray-500 hover:text-gray-700"
+              className="absolute top-0 right-2 text-gray-500 font-bold text-[20px] hover:text-gray-700"
             >
               ×
             </button>
-            <h3 className="text-xl font-semibold mb-4">{selectedCondition.condition}</h3>
+            <div className='bg-gray-100 p-3 rounded-md relative'>
+
+        
+  
+            <h3 className="text-xl font-semibold mb-4">{selectedCondition.problem_description}</h3>
             <div className="space-y-4 re">
               <div>
                 <p className="text-sm text-gray-500">Diagnosis Date</p>
-                <p className="font-medium">{selectedCondition.diagnosisDate}</p>
+                <p className="font-medium">2025/03/05</p>
               </div>
               
               <div className='flex justify-between items-center'>
                 <div>
                   <p className="text-sm text-gray-500">Description</p>
-                  <p className="text-gray-700">{selectedCondition.description}</p>
+                  <p className="text-gray-700">{selectedCondition.problem_description}</p>
                 </div>
                 <button 
-                      onClick={() => playWithGoogleVoice(`${selectedCondition.description}`)}
+                      onClick={() => playWithGoogleVoice(`${selectedCondition.problem_description}`)}
                       className="absolute bottom-2 right-2 p-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700 ml-2"
                     >
                       {isPlaying ? (
@@ -558,8 +651,15 @@ const PatientDetails: React.FC = () => {
                 
               </div>
             </div>
+
+            </div>
+              <div className='bg-gray-100 mt-5'>
+                rest of the content here
+              </div>
+            </div>
           </div>
-        </div>
+
+
       )}
       
     </div>

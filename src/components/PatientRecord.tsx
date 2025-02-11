@@ -13,9 +13,9 @@ const PatientRecord: React.FC = () => {
 
 
       const handleviewDetails = (patientID: number) => {
-        navigate(`/patient/${patientID}`)
+        navigate(`/patient/${doctorId}/${patientID}`)
       };
-    
+
     useEffect(() =>{
         const fetchpatients = async () =>{
         if(!doctorId) return;
@@ -31,7 +31,8 @@ const PatientRecord: React.FC = () => {
             }
 
             const data = await response.json()
-            console.log(data.assigned_patients)
+
+            console.log(data)
             setPatients(data.assigned_patients)
         } catch(err){
             setError(err instanceof Error ? err.message : 'Failed to fetch patients');
@@ -70,7 +71,7 @@ const PatientRecord: React.FC = () => {
                             <td className='p-3'>{patient.gender}</td>
                             <td className='p-3'>
                                 <button 
-                                onClick={() => handleviewDetails(patient.id)}
+                                onClick={() => handleviewDetails(patient.patient_id)}
                                 className='text-emerald-600 hover:underline'>
                                     View Details
                                 </button>

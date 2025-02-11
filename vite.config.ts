@@ -3,6 +3,9 @@ import react from '@vitejs/plugin-react'
 import { Target } from './config.js'
 import {Target2} from './config.js'
 import {Target3} from './config.js'
+import {Target4} from './config.js'
+
+
 
 export default defineConfig({
   plugins: [react()],
@@ -17,7 +20,45 @@ export default defineConfig({
         changeOrigin: false,},
 
         '/doctor/details': {
-          target: Target,
+          target: Target2,
+          changeOrigin: true,
+          
+          secure: false,
+          ws: true,
+          configure: (proxy, _options) => {
+            proxy.on('error', (err, _req, _res) => {
+              
+            });
+            proxy.on('proxyReq', (proxyReq, req, _res) => {
+              console.log('Sending Request to the Target:', req.method, req.url);
+            });
+            proxy.on('proxyRes', (proxyRes, req, _res) => {
+              console.log('Received Response from the Target:', req.method, req.url);
+            });
+          }
+        }, 
+
+        '/diarize': {
+          target: Target4,
+          changeOrigin: true,
+          
+          secure: false,
+          ws: true,
+          configure: (proxy, _options) => {
+            proxy.on('error', (err, _req, _res) => {
+              
+            });
+            proxy.on('proxyReq', (proxyReq, req, _res) => {
+              console.log('Sending Request to the Target:', req.method, req.url);
+            });
+            proxy.on('proxyRes', (proxyRes, req, _res) => {
+              console.log('Received Response from the Target:', req.method, req.url);
+            });
+          }
+        }, 
+
+        '/doctor_dashboard': {
+          target: Target2,
           changeOrigin: true,
           
           secure: false,
@@ -36,7 +77,7 @@ export default defineConfig({
         }, 
 
         '/doctor/login': {
-          target: Target,
+          target: Target2,
           changeOrigin: true,
           
           secure: false,

@@ -1,5 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Menu, X, Send, User, History, LogOut, Settings, Calendar, MessageCircle, Mic, MessageCircleCodeIcon } from 'lucide-react';
+import SettingsPage from './Settings';
+import VoiceRecorder from '../../utils/VoiceRecorder';
+import AppontmentPage from './MyAppointment';
+
 
 interface Message {
   type: 'user' | 'bot';
@@ -7,12 +11,15 @@ interface Message {
 }
 
 const ChatInterface: React.FC = () => {
+  const [isVoiceRecorderOpen, setIsVoiceRecorderOpen] = useState(false);
   const [isSidebarOpen, setSidebarOpen] = useState<boolean>(true);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputMessage, setInputMessage] = useState<string>('');
   const [isUserMenuOpen, setUserMenuOpen] = useState<boolean>(false);
-  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const [isSettingsOpen, setSettingsOpen] = useState<boolean>(false);
   const [isMobile, setIsMobile] = useState<boolean>(window.innerWidth < 768);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const [isAppointmentOpen, setAppointmentOpen] = useState<boolean>(false);
 
   useEffect(() => {
     const handleResize = () => {
@@ -28,6 +35,7 @@ const ChatInterface: React.FC = () => {
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+  
 
   useEffect(() => {
     scrollToBottom();
@@ -48,6 +56,19 @@ const ChatInterface: React.FC = () => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
       handleSendMessage(e as unknown as React.FormEvent<HTMLFormElement>);
+    }
+  };
+
+  const handleSettingsClick = () => {
+    setSettingsOpen(true);
+    if (isMobile) {
+      setSidebarOpen(false);
+    }
+  };
+  const handleAppointmentClick = () => {
+    setAppointmentOpen(true);
+    if (isMobile) {
+      setSidebarOpen(false);
     }
   };
 
@@ -101,7 +122,7 @@ const ChatInterface: React.FC = () => {
         {/* Sidebar */}
         <div className={`${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } fixed md:relative md:translate-x-0 w-50 h-full bg-[#1E5631] text-white transition-transform duration-300 ease-in-out z-40 backdrop-filter backdrop-blur-lg bg-opacity-80 flex flex-col justify-between`}> 
+        } fixed md:relative md:translate-x-0 w-64 h-full bg-[#1E5631] text-white transition-transform duration-300 ease-in-out z-40 backdrop-filter backdrop-blur-lg bg-opacity-80 flex flex-col justify-between`}> 
           <div className="p-4">
             {isMobile && (
               <button 
@@ -116,31 +137,38 @@ const ChatInterface: React.FC = () => {
               <span>New Chat</span>
             </button>
             <div className="space-y-2">
-                <div className="p-2 hover:bg-[#174627] rounded cursor-pointer flex items-center space-x-2">
-                  <MessageCircle size={16} />
-                  <span>Previous Chat 1</span>
-                </div>
-                <div className="p-2 hover:bg-[#174627] rounded cursor-pointer flex items-center space-x-2 mt-2">
-                  <MessageCircle size={16} />
-                  <span>Previous Chat 2</span>
-                </div>
+              <div className="p-2 hover:bg-[#174627] rounded cursor-pointer flex items-center space-x-2">
+                <MessageCircle size={16} />
+                <span>Previous Chat 1</span>
+              </div>
+              <div className="p-2 hover:bg-[#174627] rounded cursor-pointer flex items-center space-x-2 mt-2">
+                <MessageCircle size={16} />
+                <span>Previous Chat 2</span>
+              </div>
             </div>
           </div>
           {/* Bottom Section */}
           <div className="p-4 mt-auto">
-            <div className="p-2 hover:bg-[#174627] rounded cursor-pointer flex items-center space-x-2">
+            <div 
+              className="p-2 hover:bg-[#174627] rounded cursor-pointer flex items-center space-x-2"
+              onClick={handleSettingsClick}
+            >
               <Settings size={16} />
               <span>Settings</span>
             </div>
-            <div className="p-2 hover:bg-[#174627] rounded cursor-pointer flex items-center space-x-2 mt-2">
+            <div className="p-2 hover:bg-[#174627] rounded cursor-pointer flex items-center space-x-2 mt-2"
+            
+            onClick={handleAppointmentClick}
+            >
               <Calendar size={16} />
               <span>My Appointment</span>
             </div>
           </div>
         </div>
+
         {/* Chat Area */}
         <div className="flex-1 flex flex-col overflow-hidden bg-[#dff2e9] relative">
-          {/* Messages container with conditional overflow */}
+          {/* Messages container */}
           <div className={`flex-1 p-4 space-y-4 pb-24 ${messages.length === 0 ? 'overflow-hidden' : 'overflow-y-auto'}`}>
             {messages.length === 0 ? (
               <div className="h-full flex items-center justify-center">
@@ -165,7 +193,7 @@ const ChatInterface: React.FC = () => {
             <div ref={messagesEndRef} />
           </div>
           
-          {/* Input Area - Now with increased width */}
+          {/* Input Area */}
           <div className="absolute bottom-5 left-1/2 transform -translate-x-1/2 w-[calc(100%-2rem)] max-w-4xl mx-auto bg-[#e5fbf1] p-4 rounded-2xl backdrop-filter backdrop-blur-lg bg-opacity-90 shadow-lg">
             <form onSubmit={handleSendMessage} className="flex space-x-4">
               <textarea
@@ -176,16 +204,36 @@ const ChatInterface: React.FC = () => {
                 className="flex-1 resize-none border rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-[#1E5631] max-h-32"
                 rows={1}
               />
-              <button type="submit" className="bg-[#1E5631] text-white rounded-lg px-4 py-2 hover:bg-[#174627] transition-colors">
+              <button type="submit" className="bg-[#1e5631] text-white rounded-lg px-4 py-2 hover:bg-[#174627] transition-colors bg-opacity-80">
                 <Send size={20} />
               </button>
-              <button type="button" className="bg-[#1E5631] text-white rounded-lg px-4 py-2 hover:bg-[#174627] transition-colors">
+              {/* <button
+        onClick={() => setIsVoiceRecorderOpen(true)}
+      >
+        <Mic className="w-6 h-6 text-white" />
+      </button> */}
+              <button
+              onClick={() => setIsVoiceRecorderOpen(true)} 
+              type="button" className="bg-[#1E5631] text-white rounded-lg px-4 py-2 hover:bg-[#174627] transition-colors bg-opacity-80">
                 <Mic size={20} />
               </button>
             </form>
           </div>
         </div>
       </div>
+
+      {/* Settings Page */}
+      {isSettingsOpen && (
+        <SettingsPage onClose={() => setSettingsOpen(false)} />
+      )}
+        <VoiceRecorder 
+        isOpen={isVoiceRecorderOpen}
+        onClose={() => setIsVoiceRecorderOpen(false)}
+      />
+      {/* Appointment Page */}
+      {isAppointmentOpen && (
+        <AppontmentPage onClose={() => setAppointmentOpen(false)} />
+      )}
     </div>
   );
 };

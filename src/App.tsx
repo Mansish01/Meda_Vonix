@@ -6,6 +6,8 @@ import ChatInterface from './components/chat/ChatInterface';
 import { ReactElement } from 'react';
 import React from 'react';
 
+import VoiceRecording from './utils/VoiceRecorder';
+
 const App: React.FC = (): ReactElement => {
   return (
     <Router>
@@ -15,6 +17,7 @@ const App: React.FC = (): ReactElement => {
         {/* <Route path="/dashboard" element={<Dashboard />} /> */}
         <Route path="/signup" element={<SignupForm />} />
         <Route path="/chat" element={<ChatInterface />} />
+
       </Routes>
     </Router>
   );

@@ -11,8 +11,13 @@ export default {
         poppins: ['Poppins', 'sans-serif'],
         roboto: ['Roboto', 'sans-serif'],
         messiri: ['El Messiri', 'sans-serif'],
+        darkmode:"class",
       }
     },
   },
   plugins: [],
+  // module.exports = {
+  //   darkMode: "class", // Ensure dark mode is enabled via class
+  // };
+  
 }

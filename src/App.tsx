@@ -10,6 +10,8 @@ import Appointments from "./components/Appointments";
 import TreatmentPlan from "./components/TreatmentPlan";
 import PatientDetails from "./components/PatientDetails";
 import PatientLogin from "./components/PatientLogin";
+import SignupForm from "./components/SignupDoctor";
+import LoginFormDoctor from "./components/LoginDoctor";
 
 function App() {
   return (
@@ -26,6 +28,8 @@ function App() {
         <Route path="/patient/:doctorID/:patientID" element={<PatientDetails/>} />
 
         <Route path="/patientlogin" element={<PatientLogin/> } />
+        <Route path="/signupdoctor" element={<SignupForm/> } />
+        <Route path="/logindoctor" element={<LoginFormDoctor/> } />
 
         
       </Routes>

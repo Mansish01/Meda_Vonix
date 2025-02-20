@@ -24,7 +24,11 @@ const PatientRecord: React.FC = () => {
             setLoading(true);
             setError(null);
 
-            const response = await fetch(`/doctor/details/?doctor_id=${doctorId}`)
+            const response = await fetch(`/doctor/details/?doctor_id=${doctorId}`, {
+                headers: {
+                  "ngrok-skip-browser-warning": "true"
+                }
+              });
 
             if(!response.ok){
                 throw new Error(`Error status: ${response.status}`)

@@ -12,6 +12,7 @@ import PatientDetails from "./components/PatientDetails";
 import PatientLogin from "./components/PatientLogin";
 import SignupForm from "./components/SignupDoctor";
 import LoginFormDoctor from "./components/LoginDoctor";
+import ChatInterface from "./components/chat/ChatInterface";
 
 function App() {
   return (
@@ -30,6 +31,7 @@ function App() {
         <Route path="/patientlogin" element={<PatientLogin/> } />
         <Route path="/signupdoctor" element={<SignupForm/> } />
         <Route path="/logindoctor" element={<LoginFormDoctor/> } />
+        <Route path="/chat" element={<ChatInterface/> } />
 
         
       </Routes>

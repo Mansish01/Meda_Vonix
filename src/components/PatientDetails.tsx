@@ -65,7 +65,10 @@ const PatientDetails: React.FC = () => {
 
   const [file, setFile ] = useState()
   const [uploading, setUploading] = useState(false)
+  const [refuploading, setRefUploading] = useState(false)
+
   const [messages, setMessages] = useState<Transcription[]>([]);
+  const [medicalanalysis, setMedicalanalysis] =  useState(null);
 
   useEffect(() => {
 
@@ -79,6 +82,7 @@ const PatientDetails: React.FC = () => {
           const response = await fetch(`/doctor_dashboard/${doctorID}`, {
             method: 'GET',
             headers: {
+                "ngrok-skip-browser-warning": "true",
                 'Accept': 'application/json',
             },
         });
@@ -89,10 +93,12 @@ const PatientDetails: React.FC = () => {
           }
 
           const data = await response.json()
+          console.log(data)
 
           const patient = data.find((p) => p.patient_id === patientID)
           // console.log(patient)
           setPatientsdetails(patient)    
+          console.log(patient)
 
       } catch(err){
           setError(err instanceof Error ? err.message : 'Failed to fetch patients');
@@ -289,6 +295,43 @@ const PatientDetails: React.FC = () => {
     setFile(event.target.files[0])
   }
 
+  const handleRefUploadChange = (event) =>{
+    setFile(event.target.files[0])
+  }
+
+  const handleRefFileUpload = async () => {
+    if(!file) {
+      alert("Please Upload the file first")
+      return;
+    }
+
+    const formdata = new FormData();
+    formdata.append("audio_file", file)
+
+    setRefUploading(true);
+
+
+    try{
+      const response = await fetch(`/set_reference_speaker`, {
+        method : 'POST',
+        body : formdata
+      });
+
+      if(response.ok){
+        alert("File Uploaded  Successfully")
+    
+      } else{
+        alert("Error in uploading file")
+      }
+    }catch(error){
+        console.error("Error in uploading file", error)
+        alert("An error occured in uploading file")
+      }
+     
+      setRefUploading(false)
+    }
+  
+
   const handleFileUpload = async () => {
     if(!file) {
       alert("Please Upload the file first")
@@ -311,9 +354,29 @@ const PatientDetails: React.FC = () => {
       if(response.ok){
         // alert("File Uploaded  Successfully")
         const data = await response.json()
-        console.log(data.transcriptions)
-        setMessages(data.transcriptions);
-        // console.log(messages)
+        console.log(data.transcription_result)
+        setMessages(data.transcription_result);
+        setMedicalanalysis(data.medical_analysis);
+
+      
+        const conditionOverview = data.medical_analysis.condition_overview;
+        const symptoms = data.medical_analysis.symptoms;
+        const diagnosis = data.medical_analysis.diagnosis;
+        const treatment = data.medical_analysis.treatment;
+        const prevention = data.medical_analysis.prevention;
+
+        // Log the data to check if it is correct
+        console.log("Condition Overview:", conditionOverview);
+        console.log("Symptoms:", symptoms);
+        console.log("Diagnosis:", diagnosis);
+        console.log("Treatment:", treatment);
+        console.log("Prevention:", prevention);
+        console.log(messages)
+        console.log(medicalanalysis);
+            
+      
+  
+   
         
       } else{
         alert("Error in uploading file")
@@ -326,7 +389,12 @@ const PatientDetails: React.FC = () => {
       setUploading(false)
     }
   
-
+ 
+    const conditionOverview = medicalanalysis?.condition_overview;
+    const symptoms = medicalanalysis?.symptoms;
+    const diagnosis = medicalanalysis?.diagnosis;
+    const treatment = medicalanalysis?.treatment;
+    const prevention = medicalanalysis?.prevention;
 
 
   if (loading) {
@@ -401,7 +469,7 @@ const PatientDetails: React.FC = () => {
                   </div>
                   <div className="md:grid grid-cols-2 gap-2 mt-2">
                     <div>
-               ~       <h3 className="text-gray-500 text-sm">Last Visit</h3>
+                      <h3 className="text-gray-500 text-sm">Last Visit</h3>
                       <p className="text-lg">2025/01/03</p>
                     </div>
                     <div>
@@ -440,7 +508,25 @@ const PatientDetails: React.FC = () => {
                     </button>
                   </div>
                   <div className="flex items-center gap-4">
-                    <span className="text-gray-700">Initiate Call</span>
+
+                  <label className="px-4 py-2 bg-blue-500 text-white rounded cursor-pointer hover:bg-blue-600">
+                      Choose File1
+                      <input 
+                        type="file" 
+                        accept="audio/*" 
+                        onChange={handleRefUploadChange} 
+                        className="hidden"
+                      />
+                    </label>
+                    <button
+                      onClick={handleRefFileUpload}
+                      disabled={refuploading}
+                      className="px-4 py-2 bg-green-500 text-white rounded disabled:bg-gray-400 hover:bg-green-600"
+                    >
+                      {refuploading ? "Uploading..." : "Upload"}
+                    </button>
+
+                    {/* <span className="text-gray-700">Initiate Call</span>
                     <button
                       onClick={handleRecordingClick}
                       className={`px-4 py-2 rounded-lg transition-colors duration-200 ${
@@ -450,10 +536,10 @@ const PatientDetails: React.FC = () => {
                       <Mic
                         className={`w-5 h-5 text-white ${isRecording ? 'animate-pulse' : ''}`}
                       />
-                    </button>
-                    <span className="text-gray-700">or</span>
+                    </button> */}
+                    {/* <span className="text-gray-700">or</span> */}
                     <label className="px-4 py-2 bg-blue-500 text-white rounded cursor-pointer hover:bg-blue-600">
-                      Choose File
+                      Choose File2
                       <input 
                         type="file" 
                         accept="audio/*" 
@@ -511,6 +597,7 @@ const PatientDetails: React.FC = () => {
                   {activeTab === 'tab2' && (
                     <div className='flex gap-6 p-6 h-full'>
                       <div className='flex-1 min-w-0 bg-gray-100'>
+                        {/* <p>Medical Info</p>/ */}
 
 
                       {messages.map((msg, index) => (
@@ -545,53 +632,50 @@ const PatientDetails: React.FC = () => {
                           <h2 className="text-lg font-semibold mb-4">Summary</h2>
                           <div className="space-y-4 mb-8">
                            
-                            <div className="border-b pb-4">
-                              <h3 className="text-sm font-medium text-gray-700 mb-2">Key Point 1: Disease Overview</h3>
-                              <p className="text-sm text-gray-600">
-                                Tuberculosis (TB) is an infectious disease primarily affecting the lungs, caused by *Mycobacterium tuberculosis*.
-                              </p>
-                            </div>
+                          <div className="border-b pb-4">
+                            <h3 className="text-sm font-medium text-gray-700 mb-2">Key Point 1: Disease Overview</h3>
+                            <p className="text-sm text-gray-600">{conditionOverview}</p>
+                          </div>
 
-                            <div className="border-b pb-4">
-                              <h3 className="text-sm font-medium text-gray-700 mb-2">Key Point 2: Symptoms</h3>
-                              <p className="text-sm text-gray-600">
-                                - Persistent cough lasting more than 3 weeks<br />
-                                - Night sweats<br />
-                                - Unexplained weight loss<br />
-                                - Fatigue and fever
-                              </p>
-                            </div>
+                          <div className="border-b pb-4">
+                            <h3 className="text-sm font-medium text-gray-700 mb-2">Key Point 2: Symptoms</h3>
+                            <p className="text-sm text-gray-600">
+                              {symptoms.map((symptom, index) => (
+                                <span key={index}>- {symptom}<br /></span>
+                              ))}
+                            </p>
+                          </div>
 
-                            <div className="border-b pb-4">
-                              <h3 className="text-sm font-medium text-gray-700 mb-2">Key Point 3: Diagnosis</h3>
-                              <p className="text-sm text-gray-600">
-                                - Chest X-ray to detect lung abnormalities<br />
-                                - Sputum test for *Mycobacterium tuberculosis* presence<br />
-                                - Tuberculin skin test (Mantoux test) for latent TB
-                              </p>
-                            </div>
+                          <div className="border-b pb-4">
+                            <h3 className="text-sm font-medium text-gray-700 mb-2">Key Point 3: Diagnosis</h3>
+                            <p className="text-sm text-gray-600">
+                              {diagnosis.map((diagnosis, index) => (
+                                <span key={index}>- {diagnosis}<br /></span>
+                              ))}
+                            </p>
+                          </div>
 
-                            <div className="border-b pb-4">
-                              <h3 className="text-sm font-medium text-gray-700 mb-2">Key Point 4: Treatment</h3>
-                              <p className="text-sm text-gray-600">
-                                - Standard 6-month anti-TB therapy (Rifampicin, Isoniazid, Pyrazinamide, Ethambutol)<br />
-                                - Directly Observed Therapy (DOT) to ensure compliance<br />
-                                - Drug-resistant TB requires longer and stronger treatment
-                              </p>
-                            </div>
+                          <div className="border-b pb-4">
+                            <h3 className="text-sm font-medium text-gray-700 mb-2">Key Point 4: Treatment</h3>
+                            <p className="text-sm text-gray-600">
+                              {treatment.map((treatment, index) => (
+                                <span key={index}>- {treatment}<br /></span>
+                              ))}
+                            </p>
+                          </div>
 
-                            <div className="border-b pb-4">
-                              <h3 className="text-sm font-medium text-gray-700 mb-2">Key Point 5: Prevention</h3>
-                              <p className="text-sm text-gray-600">
-                                - BCG vaccination in infants<br />
-                                - Early detection and treatment of active cases<br />
-                                - Wearing masks and improving ventilation in high-risk areas
-                              </p>
-                            </div>
+                          <div className="border-b pb-4">
+                            <h3 className="text-sm font-medium text-gray-700 mb-2">Key Point 5: Prevention</h3>
+                            <p className="text-sm text-gray-600">
+                              {prevention.map((prevention, index) => (
+                                <span key={index}>- {prevention}<br /></span>
+                              ))}
+                            </p>
+                          </div>
 
                         
                           </div>
-                          <button className="absolute bottom-2 right-4 bg-emerald-600 text-white p-2 rounded-lg shadow-lg hover:bg-emerald-700">
+                          <button className="fixed bottom-2 right-4 bg-emerald-600 text-white p-2 rounded-lg shadow-lg hover:bg-emerald-700">
                               Generate Report
                           </button>
 
